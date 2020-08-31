@@ -1,0 +1,176 @@
+<!DOCTYPE html SYSTEM "http://www.thymeleaf.org/dtd/xhtml1-strict-thymeleaf-spring4-4.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:th="http://www.thymeleaf.org">
+
+
+<head>
+
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js" />
+<script
+	src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+	integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+	crossorigin="anonymous"></script>
+<link rel="stylesheet"
+	href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+	integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z"
+	crossorigin="anonymous">
+<script
+	src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+	integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+	crossorigin="anonymous"></script>
+<link
+	href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css"
+	rel="stylesheet">
+<script
+	src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+
+<script
+ 	src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+
+<link
+	href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css"
+	rel="stylesheet">
+
+
+<style>
+tr {
+	cursor: pointer;
+}
+
+.datepicker-dropdown {
+	z-index: 99999999 !important;
+}
+
+tr td:first-child, tr th:first-child  {
+    display: none;
+}
+</style>
+
+
+</head>
+
+<body>
+
+
+	<header>
+		<div class="navbar navbar-dark bg-dark shadow-sm">
+			<div class="container d-flex justify-content-between">
+				<a href="/" class="navbar-brand d-flex align-items-center"> 
+					<strong>Climate Summary</strong>
+				</a>
+			</div>
+		</div>
+	</header>
+
+
+	<main role="main">
+
+	<div class="container mt-5">
+		<div class="row">
+			<div class="col">
+				<form>
+				  <div class="row">
+				    <div class="col-5">
+				      <input type="text" class="form-control date-picker" placeholder="Start Date" id="filter-start-date">
+				    </div>
+				    <div class="col-5">
+				      <input type="text" class="form-control date-picker" placeholder="End Date" id="filter-end-date">
+				    </div>
+				    <div class="col-2">
+				      <button type="button" class="btn btn-primary" id="filter-results">Filter</button>
+				    </div>
+				  </div>
+				</form>
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col">
+				<table id="table" data-toggle="table" data-height="680"
+					data-ajax="ajaxRequest" data-search="false"
+					data-side-pagination="server" data-pagination="true">
+					<thead>
+						<tr>
+							<th data-field="stationId">Station ID</th>
+							<th data-field="stationName">Station_Name</th>
+							<th data-field="date">Date</th>
+							<th data-field="meanTemp">Mean_Temp</th>
+						</tr>
+					</thead>
+				</table>
+
+				<script>
+					var filterStartDate;
+					var filterEndDate;
+				
+				
+					/**
+					Handles the request to load paginated stations.   Pagination happens at server side.
+					Formats request and response into the format expected by Bootstrap Tables
+					**/
+					function ajaxRequest(params) {
+
+						var size = params.data.limit;
+						var page = params.data.offset / size;
+
+						var url = '/api/stations'+ '?page=' + page + '&size=' + size;
+						
+						if(filterStartDate) {
+							url = url +'&dateRangeStart=' + filterStartDate;
+						}
+						
+						if(filterEndDate) {
+							url = url +'&dateRangeEnd=' + filterEndDate;
+						}
+						
+						$.get(url).then(
+							function(res) {
+								var tableData = {
+									rows : res.content,
+									total : res.totalElements,
+									totalNotFiltered : res.totalElements
+								};
+								params.success(tableData)
+
+								$('.table > tbody > tr').click(function() {
+									var stationId = $(this).find("td:first").text();
+									window.location.href = '/stations/'
+											+ stationId;
+								});
+							})
+					}
+					
+					$(function() {
+						$('.date-picker').datepicker({
+							format: 'yyyy-mm-dd'
+						});
+						
+						/**
+						On click of the filter button reloads the table with the filtered data
+						**/
+						$('#filter-results').on('click', function() {
+							filterStartDate = $('#filter-start-date').val();
+							filterEndDate = $('#filter-end-date').val();
+							
+							if(filterStartDate && filterEndDate) {
+								var startDate = new Date(filterStartDate+'T00:00:00');
+								var endDate = new Date(filterEndDate+'T00:00:00');
+								
+								if(endDate < startDate) {
+									alert('The filter end date needs to be after ['+filterStartDate+']')
+									return true;
+								}
+							}
+							
+							$('#table').bootstrapTable('refresh');
+							return true;
+						});
+					});
+				</script>
+			</div>
+		</div>
+	</div>
+
+	</main>
+</body>
+</html>
