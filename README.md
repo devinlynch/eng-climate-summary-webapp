@@ -1,12 +1,12 @@
 # Getting Started
 
 ### Running the Tests
-cd eng-climate-summary-webapp
-./gradlew test
+1. cd eng-climate-summary-webapp
+2. ./gradlew test
 
 ### Running the App
-cd eng-climate-summary-webapp
-./gradlew bootRun
+1. cd eng-climate-summary-webapp
+2. ./gradlew bootRun
 
 
 ### Accessing the App
